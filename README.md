@@ -15,5 +15,5 @@
 
 ### 3.-
 ### cambiar la ruta de api para el back
-##  `src/services/tareas.services.js`
+##  `.env`
 
