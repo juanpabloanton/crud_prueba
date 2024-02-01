@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button, Input, Checkbox, Modal, Form } from "antd";
 import { useCreateTask } from "../../src/services/tareas.services";
 import { useSelector, useDispatch } from "react-redux";
-import { SetloadingCrud } from "../redux/crud/crudDuck";
+import { setLoadingCrud, setdataCrud } from '../redux/crud/crudDuck';
 
 
 function ModalNuevaTarea(props) {
@@ -12,22 +12,28 @@ function ModalNuevaTarea(props) {
     const dispatch = useDispatch();
 
 
-    const onFinish = (values) => {
-        var obj = {
-            title: values.title,
-            completed: values.completed || false, // Valor predeterminado a false si no está marcado
-        };
-        // console.log(obj);
-       // dispatch(SetloadingCrud(true))
-        const { data, error } = createTaskMutation.mutateAsync(obj).then(() => {
+    const onFinish = async (values) => {
+        try {
+            var obj = {
+                title: values.title,
+                completed: values.completed || false,
+            };
+
+            const { data, error } = await createTaskMutation.mutateAsync(obj);
+
+            if (data) {
+                console.log("Task created successfully:", data);
+                dispatch(setLoadingCrud(true));
+                // Call listar to refresh the data
+            }
+            dispatch(setdataCrud(props.data));
+
+        } catch (error) {
+            console.error("Error creating task:", error.message);
+        } finally {
+            dispatch(setLoadingCrud(false));
             reset();
-        }, (error) => {
-
-        }).finally(() => {
-          //  dispatch(SetloadingCrud(true))
-        });
-
-
+        };
     };
 
     // useEffect(() => {
@@ -36,12 +42,9 @@ function ModalNuevaTarea(props) {
     // }, [obj]);
 
     const reset = () => {
-        form.setFieldValue({
-            title: "",
-            completed: false,
-
-        });
-        props.toggle();
+        form.resetFields();
+        //props.listar();
+        props.toggle?.();
     }
 
     return (

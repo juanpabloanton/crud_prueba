@@ -3,9 +3,11 @@ import { Button, Row, Col, Card, Table, Checkbox, Tooltip } from "antd";
 import { DeleteTwoTone } from "@ant-design/icons";
 import ModalNuevaTarea from "./componentes/ModalNuevaTarea";
 import { useSelector, useDispatch } from "react-redux";
+import { setLoadingCrud, setdataCrud } from '../src/redux/crud/crudDuck';
 
 
-import { useListarTarea } from "../src/services/tareas.services";
+
+import { useDeleteTask, useListarTarea, useUpdateTask } from "../src/services/tareas.services";
 
 const { Meta } = Card; // Agrega esto si necesitas usar Meta de Card
 
@@ -15,17 +17,34 @@ function App() {
   const [modalIsOpen, setModal] = useState(false);
   const [obj, setObj] = useState({});
   const [accion, setAccion] = useState("Editar");
- // const loadingtar= useSelector((store) => store.persistedReducer.crud.setloading);
+  const loadingtar = useSelector((store) => store.persistedReducer.crud.setloading);
+  const datacrd = useSelector((store) => store.persistedReducer.crud.setloading);
+  const dispatch = useDispatch();
 
 
 
 
-  const { data, error, isLoading } = useListarTarea();
+  const { data, error, isLoading, mutate } = useListarTarea();
+  // const { eliminar } = useDeleteTask();
+  const eliminar = useDeleteTask();
+  const update = useUpdateTask();
+
+
   useEffect(() => {
-    if (Array.isArray(data)) {
+   /*  console.log(loadingtar);
+    console.log(isLoading); */
+    if (Array.isArray(data) && loadingtar != true) {
       setjsondata(data);
+      dispatch(setdataCrud(data))
     }
-  }, [data/* ,loadingtar */])
+  }, [data, loadingtar, isLoading, datacrd])
+
+
+  // useEffect(() => {
+  //   if (Array.isArray(data)) {
+  //     setjsondata(data);
+  //   }
+  // }, [loadingtar])
   const toggle = () => {
     setObj({});
     setModal(!modalIsOpen);
@@ -34,7 +53,7 @@ function App() {
     setModal(!modalIsOpen);
     setAccion("Nuevo");
     setObj([]);
-};
+  };
 
 
   const columns = [
@@ -64,6 +83,28 @@ function App() {
     },
   ];
 
+  const handleDelete = async (obj) => {
+    try {
+      // await eliminar(obj);
+      const { data, error } = eliminar.mutateAsync(obj)
+      mutate();
+
+      console.log('Tarea eliminada con éxito');
+    } catch (error) {
+      console.error('Error al eliminar la tarea:', error.message);
+    }
+  };
+
+  const handleUpdate = async (obj) => {
+    try {
+      console.log('Object to update:', obj.id);
+      const { data, error } = await update.mutateAsync([obj.id]);
+      console.log('Task updated successfully:', data.message);
+
+    } catch (error) {
+      console.error('Error updating the task:', error.message);
+    }
+  };
 
   const datatable = jsondata.map((value, key) => {
     // console.log(value);
@@ -71,7 +112,11 @@ function App() {
       nro: key + 1,
       title: value.title,
       completed: <>
-        <Checkbox /* onChange={onChange} */></Checkbox>
+        <Checkbox defaultChecked={value.completed} onClick={() => {
+          let obj = value /* datatable.find((x) => x.key === key); */
+          setObj(obj)
+          handleUpdate(obj)
+        }} ></Checkbox>
       </>,
       action:
         <Tooltip key="tooltipdelete" placement="leftTop" title={<span>Eliminar</span>}>
@@ -79,10 +124,9 @@ function App() {
             className="antd-dropdown-icon-text"
             twoToneColor="#FF0000"
             onClick={() => {
-              /*  let obj = dtatarjeta.find((x) => x.key === key);
-               setObj(obj)
-               setModalEliminar(!modalEliminar) */
-              // Acción para eliminar
+              let obj = value.id /* datatable.find((x) => x.key === key); */
+              setObj(obj)
+              handleDelete(obj)
             }}
           />
         </Tooltip>
@@ -91,19 +135,14 @@ function App() {
   });
 
 
-
-
-
-
-
-
   return (
     <>
       <ModalNuevaTarea
         modalIsOpen={modalIsOpen}
         toggle={toggle}
         Accion={accion}
-        listar={accion}
+        listar={mutate}
+        data={jsondata}
       >
       </ModalNuevaTarea>
       <Suspense fallback={<div>Cargando...</div>}>
