@@ -7,11 +7,8 @@
 
 
 ### 2.-
-### `npm start`
+### `npm run start`
 
-
-### 2.-
-### `npm start`
 
 ### 3.-
 ### cambiar la ruta de api para el back
