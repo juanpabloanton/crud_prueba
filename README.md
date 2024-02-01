@@ -15,5 +15,6 @@
 
 ### 3.-
 ### cambiar la ruta de api para el back
-##  `.env`
+##  `.env el REACT_APP_URL`
+
 
